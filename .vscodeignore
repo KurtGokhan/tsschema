@@ -12,3 +12,7 @@ vsc-extension-quickstart.md
 **/*.ts
 tsconfig.json
 yarn.lock
+out/test/**
+*.vsix
+*.zip
+tsschema-*/**

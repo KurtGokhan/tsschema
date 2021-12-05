@@ -18,11 +18,19 @@
     },
     {
       "type": "npm",
+      "script": "build"
+    },
+    {
+      "type": "npm",
+      "script": "test"
+    },
+    {
+      "type": "npm",
       "script": "package"
     },
     {
       "type": "npm",
-      "script": "deploy"
+      "script": "publish"
     }
   ]
 }
