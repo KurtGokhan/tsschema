@@ -1,8 +1,13 @@
 {
-  "name": "ts-json-schema",
-  "displayName": "ts-json-schema",
-  "description": "Allows validating JSON with a Typespcript type inside the project",
+  "name": "tsschema",
+  "displayName": "VSCode Typescript JSON Schema",
+  "description": "Validate JSON with a Typespcript type inside the workspace",
   "version": "0.0.1",
+  "publisher": "KurtGokhan",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KurtGokhan/tsschema.git"
+  },
   "engines": {
     "vscode": "^1.62.0"
   },
