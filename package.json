@@ -5,10 +5,18 @@
   "description": "Validate JSON with a Typespcript type inside the workspace",
   "version": "0.0.1",
   "publisher": "KurtGokhan",
+  "homepage": "https://github.com/KurtGokhan/tsschema",
+  "bugs": "https://github.com/KurtGokhan/tsschema/issues",
   "repository": {
     "type": "git",
     "url": "https://github.com/KurtGokhan/tsschema.git"
   },
+  "keywords": [
+    "json",
+    "typescript",
+    "vscode",
+    "schema"
+  ],
   "engines": {
     "vscode": "^1.62.0"
   },
