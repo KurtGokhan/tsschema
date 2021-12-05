@@ -1,4 +1,4 @@
-# VSCode Typescript JSON Schema
+# JSON Typescript Virtual Schema for VSCode
 
 Allows validating JSON with a Typespcript type inside the workspace with a custom scheme protocol handler.
 

@@ -4,6 +4,6 @@ All notable changes to the "tsschema" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## [Unreleased]
+## 1.0.0
 
-- Initial release
+- Initial release with `tsschema://` virtual JSON schema capability. Allows file relative and workspace relative paths.
