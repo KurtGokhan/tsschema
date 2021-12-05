@@ -4,9 +4,10 @@ Allows validating JSON with a Typespcript type inside the workspace with a custo
 
 ## Usage
 
-This extension will work when a JSON file defines a `$schema` property with `tsschema` protocol in the format `tsschema://<FILE_PATH>#<TYPE_NAME>`
+This extension will work when a JSON file defines a `$schema` property with `tsschema` protocol in one of the following formats:
 
-For example:
+
+### `tsschema://<FILE_PATH>#<TYPE_NAME>`
 
 ```jsonc
 {
@@ -18,6 +19,30 @@ For example:
 A JSON file like above will validate the `Person` type from `./src/types/person.ts` file.
 
 If the path starts with a dot, it will be resolved relative to the JSON file. Otherwise it will be relative to the current workspace folder.
+
+### `tsschema:///#<TYPE_NAME>`
+
+```jsonc
+{
+  "$schema": "tsschema:///#Person",
+  ...
+}
+```
+
+A JSON file like above will validate the `Person` type found in the project. A `tsconfig.json` file must exist for this method to work. The behavior is undefined when this type name is not unique.
+
+### Specifying options
+
+In addition to the above formats, options can be provided to the [ts-json-schema-generator](https://github.com/vega/ts-json-schema-generator) with query parameters.
+
+```jsonc
+{
+  "$schema": "tsschema://src/types/person.ts?noExtraProps&defaultNumberType=integer#Person",
+  ...
+}
+```
+
+A JSON file like above will pass `{ defaultNumberType: 'integer', noExtraProps: true }` to [ts-json-schema-generator](https://github.com/vega/ts-json-schema-generator).
 
 ## Known Issues
 
