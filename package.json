@@ -3,7 +3,7 @@
   "name": "tsschema",
   "displayName": "JSON Typescript Virtual Schema",
   "description": "Validate JSON with a Typespcript type inside the workspace",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "publisher": "KurtGokhan",
   "homepage": "https://github.com/KurtGokhan/tsschema",
   "bugs": "https://github.com/KurtGokhan/tsschema/issues",
