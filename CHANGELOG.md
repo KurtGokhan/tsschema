@@ -4,6 +4,10 @@ All notable changes to the "tsschema" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 1.0.2
+
+- Fixed extension not working when packaged
+
 ## 1.0.1
 
 - Allow generating schema for a type without path by using `tsconfig.json`

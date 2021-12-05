@@ -15,6 +15,14 @@
         "kind": "build",
         "isDefault": true
       }
+    },
+    {
+      "type": "npm",
+      "script": "package"
+    },
+    {
+      "type": "npm",
+      "script": "deploy"
     }
   ]
 }
