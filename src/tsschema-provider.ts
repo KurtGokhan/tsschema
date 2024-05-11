@@ -57,7 +57,7 @@ export class TSSchemaProvider implements vscode.TextDocumentContentProvider {
       const schema = generator?.getSchemaForSymbol(typeName);
       return schema;
     } catch (error) {
-      vscode.window.showErrorMessage('Couldn\'t generate schema because program has errors');
+      vscode.window.showErrorMessage('Couldn\'t generate schema because program has errors\n' + String(error));
       return;
     }
   }

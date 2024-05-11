@@ -26,19 +26,20 @@
   "activationEvents": [
     "onFileSystem:tsschema"
   ],
-  "main": "./out/extension.js",
+  "main": "./dist/tsschema.js",
   "contributes": {},
   "scripts": {
-    "vscode:prepublish": "yarn run build",
-    "build": "tsc",
-    "watch": "tsc -watch",
+    "vscode:prepublish": "npm run build",
+    "build": "vite build",
+    "watch": "vite dev -watch",
     "package": "vsce package",
     "publish": "vsce publish"
   },
   "devDependencies": {
     "@types/node": "20.x",
     "@types/vscode": "^1.62.0",
-    "@vscode/vsce": "^2.26.1"
+    "@vscode/vsce": "^2.26.1",
+    "vite": "^5.2.11"
   },
   "dependencies": {
     "typescript": "^5.4.5",
