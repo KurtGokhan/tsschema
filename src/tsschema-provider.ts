@@ -1,5 +1,4 @@
 import { dirname, resolve } from 'path';
-import * as tsj from 'ts-json-schema-generator';
 import * as TJS from 'typescript-json-schema';
 import * as vscode from 'vscode';
 
@@ -50,35 +49,19 @@ export class TSSchemaProvider implements vscode.TextDocumentContentProvider {
       tsconfig = files[0]?.fsPath;
     }
 
-    const newGenerator = false;
-
     try {
+      const resolvedConfig: TJS.PartialArgs = {
+        ignoreErrors: true,
+        ...config,
+      };
 
-      if (newGenerator) {
-        const resolvedConfig: tsj.Config = {
-          ...tsconfig && { tsconfig },
-          ...fileName && { path: fileName },
-          ...typeName && { type: typeName },
-          ...config,
-        };
+      let program: TJS.Program;
+      if (!tsconfig) program = TJS.getProgramFromFiles([fileName], {}, basePath);
+      else program = TJS.programFromConfig(tsconfig);
 
-        const gen = tsj.createGenerator(resolvedConfig);
-        const schema = gen.createSchema(typeName);
-        return schema;
-      } else {
-        const resolvedConfig: TJS.PartialArgs = {
-          ignoreErrors: true,
-          ...config,
-        };
-
-        let program: TJS.Program;
-        if (!tsconfig) program = TJS.getProgramFromFiles([fileName], {}, basePath);
-        else program = TJS.programFromConfig(tsconfig);
-
-        const generator = TJS.buildGenerator(program, resolvedConfig);
-        const schema = generator?.getSchemaForSymbol(typeName);
-        return schema;
-      }
+      const generator = TJS.buildGenerator(program, resolvedConfig);
+      const schema = generator?.getSchemaForSymbol(typeName);
+      return schema;
     } catch (error) {
       vscode.window.showErrorMessage('Couldn\'t generate schema because program has errors\n' + String(error));
       return;
