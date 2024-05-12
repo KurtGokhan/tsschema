@@ -1,4 +1,5 @@
 import { dirname, resolve } from 'path';
+import * as tsj from 'ts-json-schema-generator';
 import * as TJS from 'typescript-json-schema';
 import * as vscode from 'vscode';
 
@@ -7,6 +8,7 @@ export class TSSchemaProvider implements vscode.TextDocumentContentProvider {
   onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
   onDidChange = this.onDidChangeEmitter.event;
   watchedFiles: { [key: string]: vscode.Uri } = {};
+  allUris: vscode.Uri[] = [];
 
   async provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): Promise<string> {
     let path = uri.authority + uri.path;
@@ -25,6 +27,7 @@ export class TSSchemaProvider implements vscode.TextDocumentContentProvider {
 
     const relativePath = vscode.workspace.asRelativePath(fullPath);
     this.watchedFiles[relativePath] = uri;
+    this.allUris.push(uri);
 
     const queryConfig = Object.fromEntries(
       uri.query.split('&')
@@ -33,32 +36,56 @@ export class TSSchemaProvider implements vscode.TextDocumentContentProvider {
         .map(pair => pair.length === 1 ? [pair[0], true] : [pair[0], pair[1]])
         .map(pair => pair.map(val => val === 'false' ? false : val === 'true' ? true : val)));
 
-    const config: TJS.PartialArgs = {
-      ignoreErrors: true,
-      ...queryConfig,
-    };
+    const schema = await this.generateSchema(type, fullPath, basePath, queryConfig, token);
 
-    const schema = await this.generateSchema(type, fullPath, basePath, config, token);
-
-    return JSON.stringify(schema);
+    return JSON.stringify(schema, null, 2);
   }
 
-  private async generateSchema(typeName: string, fileName: string, basePath: string | undefined, config: TJS.PartialArgs, token: vscode.CancellationToken) {
-    let program: TJS.Program;
+  private async generateSchema(typeName: string, fileName: string, basePath: string | undefined, config: any, token: vscode.CancellationToken) {
+    let files = await vscode.workspace.findFiles('tsconfig.json', '**/node_modules/**', 1, token);
+    let tsconfig = files[0]?.fsPath;
 
-    const files = await vscode.workspace.findFiles('tsconfig.json', '**/node_modules/**', 1, token);
-    const tsConfig = files[0]?.fsPath;
+    if (!tsconfig) {
+      files = await vscode.workspace.findFiles('tsconfig.*.json', '**/node_modules/**', 1, token);
+      tsconfig = files[0]?.fsPath;
+    }
 
-    if (!tsConfig) program = TJS.getProgramFromFiles([fileName], {}, basePath);
-    else program = TJS.programFromConfig(tsConfig);
+    const newGenerator = false;
 
     try {
-      const generator = TJS.buildGenerator(program, config);
-      const schema = generator?.getSchemaForSymbol(typeName);
-      return schema;
+
+      if (newGenerator) {
+        const resolvedConfig: tsj.Config = {
+          ...tsconfig && { tsconfig },
+          ...fileName && { path: fileName },
+          ...typeName && { type: typeName },
+          ...config,
+        };
+
+        const gen = tsj.createGenerator(resolvedConfig);
+        const schema = gen.createSchema(typeName);
+        return schema;
+      } else {
+        const resolvedConfig: TJS.PartialArgs = {
+          ignoreErrors: true,
+          ...config,
+        };
+
+        let program: TJS.Program;
+        if (!tsconfig) program = TJS.getProgramFromFiles([fileName], {}, basePath);
+        else program = TJS.programFromConfig(tsconfig);
+
+        const generator = TJS.buildGenerator(program, resolvedConfig);
+        const schema = generator?.getSchemaForSymbol(typeName);
+        return schema;
+      }
     } catch (error) {
       vscode.window.showErrorMessage('Couldn\'t generate schema because program has errors\n' + String(error));
       return;
     }
+  }
+
+  refreshAllUris() {
+    this.allUris.forEach(uri => this.onDidChangeEmitter.fire(uri));
   }
 };

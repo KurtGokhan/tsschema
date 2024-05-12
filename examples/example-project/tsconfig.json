@@ -1,5 +1,7 @@
 {
-  "compilerOptions": {},
+  "compilerOptions": {
+    "lib": ["ESNext"]
+  },
   "include": [
     "src"
   ],

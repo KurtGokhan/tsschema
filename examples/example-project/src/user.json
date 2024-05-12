@@ -2,11 +2,10 @@
   "$schema": "tsschema:///#User",
   "messages": [
     {
-      "id": "1",
-      "content": "Hello, world!",
       "timestamp": "2020-01-01T00:00:00Z",
       "message": "asdasd"
     }
   ],
-  "birthdate": "2000-01-01"
+  "username": "asd",
+  "birthdate": "2020-01-01T"
 }

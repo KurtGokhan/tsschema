@@ -26,7 +26,7 @@
   "activationEvents": [
     "onFileSystem:tsschema"
   ],
-  "main": "./dist/tsschema.js",
+  "main": "./dist/extension.js",
   "contributes": {},
   "scripts": {
     "vscode:prepublish": "npm run build",
@@ -42,7 +42,8 @@
     "vite": "^5.2.11"
   },
   "dependencies": {
-    "typescript": "^5.4.5",
-    "typescript-json-schema": "^0.63.0"
+    "ts-json-schema-generator": "^2.1.1",
+    "typescript": "5.4.5",
+    "typescript-json-schema": "0.63.0"
   }
 }
