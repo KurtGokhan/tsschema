@@ -30,19 +30,19 @@
   "contributes": {},
   "scripts": {
     "vscode:prepublish": "npm run build",
+    "start": "vite build --watch --mode development --minify false",
     "build": "vite build",
-    "watch": "vite dev -watch",
     "package": "vsce package",
     "publish": "vsce publish"
   },
   "devDependencies": {
     "@types/node": "20.x",
     "@types/vscode": "^1.62.0",
-    "@vscode/vsce": "^2.26.1",
-    "vite": "^5.2.11"
+    "@vscode/vsce": "^2.28.0",
+    "vite": "^5.3.1"
   },
   "dependencies": {
     "typescript": "5.4.5",
-    "typescript-json-schema": "0.63.0"
+    "typescript-json-schema": "0.64.0"
   }
 }

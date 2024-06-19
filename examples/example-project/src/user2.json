@@ -1,0 +1,4 @@
+{
+  "$schema": "tsschema://./user2#User",
+  "asdf": "asd"
+}

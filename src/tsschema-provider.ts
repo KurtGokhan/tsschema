@@ -1,74 +1,146 @@
-import { dirname, resolve } from 'path';
-import * as TJS from 'typescript-json-schema';
-import * as vscode from 'vscode';
-
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import {
+  parseConfigFileTextToJson,
+  parseJsonConfigFileContent,
+  resolveModuleName,
+  sys,
+} from "typescript";
+import * as TJS from "typescript-json-schema";
+import * as vscode from "vscode";
 
 export class TSSchemaProvider implements vscode.TextDocumentContentProvider {
-  onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
-  onDidChange = this.onDidChangeEmitter.event;
-  watchedFiles: { [key: string]: vscode.Uri } = {};
-  allUris: vscode.Uri[] = [];
+	onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
+	onDidChange = this.onDidChangeEmitter.event;
+	watchedFiles: { [key: string]: vscode.Uri } = {};
+	allUris: vscode.Uri[] = [];
 
-  async provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): Promise<string> {
-    let path = uri.authority + uri.path;
-    if (path === '/') path = '';
+	async provideTextDocumentContent(
+		uri: vscode.Uri,
+		token: vscode.CancellationToken,
+	): Promise<string> {
+		let fPath = uri.authority + uri.path;
+		if (fPath === "/") fPath = "";
 
-    const type = uri.fragment;
+		const type = uri.fragment;
 
-    const currentUri = vscode.window.activeTextEditor?.document.uri;
+		const currentUri = vscode.window.activeTextEditor?.document.uri;
 
-    const currentFile = currentUri?.fsPath;
-    const currentFolder = currentFile && dirname(currentFile);
+		const currentFile = currentUri?.fsPath;
+		const currentFolder = currentFile && dirname(currentFile);
 
-    const basePath = currentUri && vscode.workspace.getWorkspaceFolder(currentUri)?.uri.fsPath;
-    const relativeTo = path.startsWith('.') ? currentFolder : basePath;
-    const fullPath = !path ? '' : resolve(...[relativeTo, path].filter(Boolean) as string[]);
+		const basePath =
+			currentUri && vscode.workspace.getWorkspaceFolder(currentUri)?.uri.fsPath;
+		const relativeTo = fPath.startsWith(".") ? currentFolder : basePath;
+		const fullPath = !fPath
+			? ""
+			: resolve(...([relativeTo, fPath].filter(Boolean) as string[]));
 
-    const relativePath = vscode.workspace.asRelativePath(fullPath);
-    this.watchedFiles[relativePath] = uri;
-    this.allUris.push(uri);
+		const relativePath = vscode.workspace.asRelativePath(fullPath);
+		this.watchedFiles[relativePath] = uri;
+		this.allUris.push(uri);
 
-    const queryConfig = Object.fromEntries(
-      uri.query.split('&')
-        .map(ps => ps.split('='))
-        .filter(pair => pair[0])
-        .map(pair => pair.length === 1 ? [pair[0], true] : [pair[0], pair[1]])
-        .map(pair => pair.map(val => val === 'false' ? false : val === 'true' ? true : val)));
+		const queryConfig = Object.fromEntries(
+			uri.query
+				.split("&")
+				.map((ps) => ps.split("="))
+				.filter((pair) => pair[0])
+				.map((pair) =>
+					pair.length === 1 ? [pair[0], true] : [pair[0], pair[1]],
+				)
+				.map((pair) =>
+					pair.map((val) =>
+						val === "false" ? false : val === "true" ? true : val,
+					),
+				),
+		);
 
-    const schema = await this.generateSchema(type, fullPath, basePath, queryConfig, token);
+		let files = await vscode.workspace.findFiles(
+			"tsconfig.json",
+			"**/node_modules/**",
+			1,
+			token,
+		);
+		let tsconfig = files[0]?.fsPath;
 
-    return JSON.stringify(schema, null, 2);
-  }
+		if (!tsconfig) {
+			files = await vscode.workspace.findFiles(
+				"tsconfig.*.json",
+				"**/node_modules/**",
+				1,
+				token,
+			);
+			tsconfig = files[0]?.fsPath;
+		}
 
-  private async generateSchema(typeName: string, fileName: string, basePath: string | undefined, config: any, token: vscode.CancellationToken) {
-    let files = await vscode.workspace.findFiles('tsconfig.json', '**/node_modules/**', 1, token);
-    let tsconfig = files[0]?.fsPath;
+		let resolvedFileName = fullPath;
+		if (tsconfig && fPath && fullPath) {
+			const tsconfigDir = dirname(tsconfig);
+			const json = parseConfigFileTextToJson(
+				tsconfig,
+				readFileSync(tsconfig, "utf8"),
+			);
+			const parsed = parseJsonConfigFileContent(
+				json.config,
+				sys,
+				tsconfigDir,
+				{},
+				tsconfig,
+			);
 
-    if (!tsconfig) {
-      files = await vscode.workspace.findFiles('tsconfig.*.json', '**/node_modules/**', 1, token);
-      tsconfig = files[0]?.fsPath;
-    }
+			const t = resolve(relativeTo, "./index.ts");
+			const res = resolveModuleName(fPath, t, parsed.options, sys);
+			resolvedFileName = res.resolvedModule?.resolvedFileName || fullPath;
+		}
 
-    try {
-      const resolvedConfig: TJS.PartialArgs = {
-        ignoreErrors: true,
-        ...config,
-      };
+		const schema = await this.generateSchema(
+			type,
+			resolvedFileName,
+			basePath,
+			queryConfig,
+			tsconfig,
+		);
 
-      let program: TJS.Program;
-      if (!tsconfig) program = TJS.getProgramFromFiles([fileName], {}, basePath);
-      else program = TJS.programFromConfig(tsconfig);
+		return JSON.stringify(schema, null, 2);
+	}
 
-      const generator = TJS.buildGenerator(program, resolvedConfig);
-      const schema = generator?.getSchemaForSymbol(typeName);
-      return schema;
-    } catch (error) {
-      vscode.window.showErrorMessage('Couldn\'t generate schema because program has errors\n' + String(error));
-      return;
-    }
-  }
+	private async generateSchema(
+		typeName: string,
+		fileName: string,
+		basePath: string | undefined,
+		config: Record<string, unknown>,
+		tsconfig: string,
+	) {
+		try {
+			const resolvedConfig: TJS.PartialArgs = {
+				ignoreErrors: true,
+				...config,
+			};
 
-  refreshAllUris() {
-    this.allUris.forEach(uri => this.onDidChangeEmitter.fire(uri));
-  }
-};
+			let program: TJS.Program;
+			if (!tsconfig)
+				program = TJS.getProgramFromFiles([fileName], {}, basePath);
+			else
+				program = TJS.programFromConfig(tsconfig, fileName ? [fileName] : undefined);
+
+			const generator = TJS.buildGenerator(
+				program,
+				resolvedConfig,
+				fileName ? [fileName] : undefined,
+			);
+			const schema = generator?.getSchemaForSymbol(typeName);
+			return schema;
+		} catch (error) {
+			vscode.window.showErrorMessage(
+				`Couldn\'t generate schema because program has errors\n${String(error)}`,
+			);
+			return;
+		}
+	}
+
+	refreshAllUris() {
+		for (const uri of this.allUris) {
+			this.onDidChangeEmitter.fire(uri);
+		}
+	}
+}
